@@ -1,3 +1,16 @@
+# task0
+
+root@1-0001:~/lab2# for i in 1 2 3; do bin/enrolld -bench-fsync 2000; done
+fsync 次数 2000，总耗时 2.45 s，数据目录 data
+fsync 耗时（毫秒）：mean 1.207  p50 1.117  p90 1.428  p99 2.769  max 4.141
+按平均值推算，一个写者串行 fsync 每秒最多约 828 次（= 1000 / 1.207）
+fsync 次数 2000，总耗时 2.48 s，数据目录 data
+fsync 耗时（毫秒）：mean 1.223  p50 1.120  p90 1.494  p99 2.693  max 4.907
+按平均值推算，一个写者串行 fsync 每秒最多约 817 次（= 1000 / 1.223）
+fsync 次数 2000，总耗时 2.45 s，数据目录 data
+fsync 耗时（毫秒）：mean 1.209  p50 1.098  p90 1.455  p99 3.311  max 6.270
+按平均值推算，一个写者串行 fsync 每秒最多约 827 次（= 1000 / 1.209）
+
 # task1
 
 root@1-0001:~/lab2# scripts/table.sh runs/t1-light ok_rps mean_ms p99_ms server_rps server_mean_ms server_p99_ms cpu_ms_per_req db_query_mean_ms
