@@ -1,3 +1,5 @@
+## task1
+
 root@1-0001:~/lab2# scripts/table.sh runs/t1-light ok_rps mean_ms p99_ms server_rps server_mean_ms server_p99_ms cpu_ms_per_req db_query_mean_ms
 
 | step | target_rps | ok_rps | mean_ms | p99_ms | server_rps | server_mean_ms | server_p99_ms | cpu_ms_per_req | db_query_mean_ms |
@@ -6,6 +8,11 @@ root@1-0001:~/lab2# scripts/table.sh runs/t1-light ok_rps mean_ms p99_ms server_
 | 2 | 50 | 50.5 | 11.43 | 12.78 | 51.7083 | 10.7199 | 19.9 | 0.537482 | 10.3136 |
 | 3 | 100 | 97.8 | 11.59 | 13.92 | 95.5 | 10.8713 | 19.9 | 0.536459 | 10.4288 |
 | all | - | 74.2 | 11.54 | 13.24 | - | - | - | - | - |
+
+## task 2
+
+root@1-0001:~/lab2# scripts/rates.sh 388
+78,155,233,272,310,349,388,427,466
 
 root@1-0001:~/lab2# scripts/run.sh r1-pool4 -url http://127.0.0.1:8080/api/courses/1 -rates "$RATES"
 == loadgen（结果写进 runs/r1-pool4/）
