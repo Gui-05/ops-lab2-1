@@ -1,4 +1,4 @@
-# 实验 2 记录：第 <组号> 组
+# 实验 2 记录：第 1 组
 
 评分时依据本文件和 `runs/` 中的原始数据核对。本文件中的每一个数值，都须能在某个 `runs/<名字>/` 的文件中找到：表格用 `scripts/table.sh` 生成后粘贴，其他数值注明出处（例如“`runs/r1-pool4/red.csv` 第 6 阶段”）。不要只贴截图。将 `<填写>` 替换为本组的内容。
 
@@ -8,56 +8,84 @@
 
 | 项 | 内容 |
 |---|---|
-| 小组 | 第 <组号> 组 |
-| 仓库地址 | <https://github.com/…> |
-| 主机 | <云厂商与规格名，例如某云的 2 vCPU 4 GB 通用型；或学校的虚拟机> |
-| CPU | <`lscpu` 的 Model name；vCPU 数；`lscpu -e` 里每个 CPU 对应的 CORE> |
-| 内存 | <`free -m` 的 total> |
-| 数据目录所在的盘 | <`findmnt -T data` 的 SOURCE 和 FSTYPE；磁盘类型，如“通用型 SSD 云盘 40 GB”> |
-| 操作系统与内核 | <`/etc/os-release` 的 PRETTY_NAME；`uname -r`> |
-| Go、Prometheus、node_exporter | <`go version`；`tools/prometheus --version` 第一行；`tools/node_exporter --version` 第一行> |
-| 分核 | enrolld：<如 1>；loadgen、Prometheus、node_exporter：<如 0> |
+| 小组 | 第 1 组 |
+| 仓库地址 | <https://github.com/Gui-05/ops-lab2-1> |
+| 主机 | 华为云 Flexus 云服务器 X 实例（X86 算力，2 vCPU / 4 GiB，性能模式），华东-上海一；系统盘为高 IO 云硬盘 40 GB |
+| CPU | `General Purpose Processor`（`runs/t1-light/meta.txt`）；**2 个 vCPU**（2 个逻辑核）；`lscpu -e` 中 CPU 0 与 CPU 1 的 CORE **均为 0**，即同一物理核的两个超线程 |
+| 内存 | **3531 MiB**（`free -m` 的 total；`runs/t1-light/meta.txt` 记为「3531 MiB，available 2193 MiB」） |
+| 数据目录所在的盘 | SOURCE **`/dev/vda1`**，FSTYPE **`ext4`**（`findmnt -T data`；`runs/t1-light/meta.txt` 记为「data → /dev/vda1（ext4），统计的磁盘 vda」）；高 IO 云硬盘 40 GB，非 tmpfs |
+| 操作系统与内核 | **Ubuntu 24.04.4 LTS**（`/etc/os-release` 的 PRETTY_NAME）；**`6.8.0-136-generic`**（`uname -r`；亦见 `runs/t1-light/meta.txt`） |
+| Go、Prometheus、node_exporter | **`go1.26.9 linux/amd64`**（`runs/t1-light/meta.txt` 的 `/config.go_version`）；`prometheus, version 3.13.4 (branch: HEAD, revision: 007a9e9ba628f815ce83e1ba9f29b97981996c3c)`；`node_exporter, version 1.12.1 (branch: HEAD, revision: 6044da783597cc3b57aef7580ddcdcff58a4ee99)` |
+| 分核 | enrolld：**1**；loadgen、Prometheus、node_exporter：**0**（`runs/t1-light/meta.txt`：「enrolld: pid 756621，绑定的核 1」「loadgen: 绑定的核 0」） |
 
 ## 2. 任务 0：基线
 
 `bin/enrolld -bench-fsync 2000` 连续运行三次的输出：
 
 ```text
-<粘贴三次的输出>
+===== 第 1 次 =====
+fsync 次数 2000，总耗时 2.45 s，数据目录 data
+fsync 耗时（毫秒）：mean 1.213  p50 1.115  p90 1.444  p99 2.553  max 4.458
+按平均值推算，一个写者串行 fsync 每秒最多约 824 次（= 1000 / 1.213）
+
+===== 第 2 次 =====
+fsync 次数 2000，总耗时 2.46 s，数据目录 data
+fsync 耗时（毫秒）：mean 1.218  p50 1.110  p90 1.494  p99 2.959  max 4.897
+按平均值推算，一个写者串行 fsync 每秒最多约 821 次（= 1000 / 1.218）
+
+===== 第 3 次 =====
+fsync 次数 2000，总耗时 2.50 s，数据目录 data
+fsync 耗时（毫秒）：mean 1.236  p50 1.120  p90 1.611  p99 2.674  max 4.623
+按平均值推算，一个写者串行 fsync 每秒最多约 809 次（= 1000 / 1.236）
 ```
 
-按平均值计算，单个写者串行 fsync 每秒最多约 <填写> 次。三次之间相差多少？<填写>
+按平均值计算，单个写者串行 fsync 每秒最多约 **818** 次（三次 mean 取平均 = 1.222 ms，1000 ÷ 1.222 ≈ 818）。三次之间相差多少？**推算值 809～824 次/秒，极差 15 次（约 1.8%）；平均耗时 1.213～1.236 ms，极差 0.023 ms（约 1.9%），三次波动均小于 2%，说明该虚机磁盘的 fsync 性能稳定、本次测量可重复。**
 
 空载和运行 fsync 测试时各工具的读数（各观察 5 秒以上，填写典型值）：
 
 | 工具与列 | 空载 | 运行 `-bench-fsync` 时 | 该列的含义 |
 |---|---|---|---|
-| `vmstat -w 1`：r、b | <填写> | <填写> | <填写> |
-| `vmstat -w 1`：us、sy、id、wa、st | <填写> | <填写> | <填写> |
-| `iostat -dx 1 <盘>`：w/s、wkB/s | <填写> | <填写> | <填写> |
-| `iostat -dx 1 <盘>`：w_await、f/s、f_await | <填写> | <填写> | <填写> |
-| `iostat -dx 1 <盘>`：aqu-sz、%util | <填写> | <填写> | <填写> |
+| `vmstat -w 1`：r、b | **0、0** | **0、1** | `r` = 运行队列长度，正在运行或等待 CPU 的进程数；`b` = 处于不可中断睡眠（通常是等 I/O）的进程数 |
+| `vmstat -w 1`：us、sy、id、wa、st | **0～1%、0～1%、98～100%、0～1%、0** | **0～1%、5%、49%、45～46%、0** | `us` 用户态；`sy` 内核态；`id` 空闲；`wa` 等待 I/O 的 CPU 时间（iowait）；`st` 被宿主机拿走的 CPU 时间（steal） |
+| `iostat -dx 1 vda`：w/s、wkB/s | **≈0（偶见 2～7）、≈0（偶见 28～52）** | **≈2400（2200～2500）、≈12800（12000～13500）** | 每秒写请求数（写 IOPS）；每秒写入数据量（kB/s） |
+| `iostat -dx 1 vda`：w_await、f/s、f_await | **≈0.5（偶见 9.5 的噪声）、0～2、0～0.5** | **≈0.40、≈1550（1458～1644）、≈0.03** | 写请求平均等待时间（ms，含排队）；每秒 flush 请求数；flush 请求平均等待时间（ms） |
+| `iostat -dx 1 vda`：aqu-sz、%util | **0、0～0.2%（偶见 2.0%）** | **≈1.0、92～95%** | 平均队列长度（待处理的 I/O 请求数）；设备忙碌时间百分比 |
 
-运行 fsync 测试时，CPU 是否繁忙？哪几列表明存在等待？<填写>
+运行 fsync 测试时，CPU 是否繁忙？哪几列表明存在等待？
+
+**CPU 不繁忙。** 运行期间 `us` 仅 0～1%、`sy` 5%，`id` 仍有 49%；`st` 全程为 0，说明 CPU 未被宿主机拿走。占掉 45～46% 的是 `wa`（iowait）—— **CPU 是在等磁盘，而不是在计算。**
+
+表明存在等待的列：`vmstat` 的 **`wa` = 45～46%**（CPU 等 I/O 的时间）、**`b` = 1**（有 1 个进程被 I/O 阻塞）、`bo` 由空载 0～60 块/秒涨到 **12000～13500 块/秒**；`iostat` 的 **`%util` = 92～95%**（设备几乎一直在忙）、**`aqu-sz` ≈ 1.0**（有 1 个请求在排队）、`w_await` = 0.40 ms、`f/s` ≈ 1550 次/秒。
+
+**结论：瓶颈是磁盘，不是 CPU。** `us`/`sy` 都很低而 `wa` 很高，正是「磁盘忙、CPU 闲」的形态；`%util` 已接近饱和但 `aqu-sz` 只有约 1，说明是稳定饱和而非严重堆积。
+
+> 说明：上述 vmstat/iostat 读数取自同参数的 `-bench-fsync 5000` 运行（当时才开启监控，mean = 1.270 ms、约 787 次/秒）；三次 `-bench-fsync 2000` 运行未同时开启监控，比监控条件下快约 4%，属观测者效应。
 
 ## 3. 任务 1：指标流水线
 
-两个抓取目标的状态（`curl -s 127.0.0.1:9090/api/v1/targets` 中两处 `"health"` 的值）：<填写>
+两个抓取目标的状态（`curl -s 127.0.0.1:9090/api/v1/targets` 中两处 `"health"` 的值）：**`up`、`up`**。依据：`runs/t1-light/red.csv` 中服务层各列（`server_rps`、`server_mean_ms`、`db_query_mean_ms` 等）均有数值，说明 Prometheus 成功抓到了 enrolld；`runs/t1-light/use.csv` 中资源层各列（`svc_cpu_busy`、`procs_running_avg`、`disk_util` 等）均有数值，说明同一 Prometheus 也成功抓到了 node_exporter。若某个目标为 down，它对应的列会是空值。
 
 本组编写的四条查询（与 `deploy/queries-red.txt` 一致）：
 
 ```text
-server_rps          <填写>
-server_error_rate   <填写>
-server_p99_ms       <填写>
-server_slo_good     <填写>
+server_rps          sum(rate(http_requests_total{route="${route}"}[${window}]))
+server_error_rate   (sum(rate(http_requests_total{route="${route}",code=~"5.."}[${window}])) or vector(0)) / sum(rate(http_requests_total{route="${route}"}[${window}]))
+server_p99_ms       1000 * histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{route="${route}"}[${window}])))
+server_slo_good     (sum(rate(http_request_duration_seconds_bucket{route="${route}",code="200",le="${slo}"}[${window}])) or vector(0)) / sum(rate(http_requests_total{route="${route}"}[${window}]))
 ```
 
 `runs/t1-light` 的数据（`scripts/table.sh runs/t1-light ok_rps mean_ms p99_ms server_rps server_mean_ms server_p99_ms cpu_ms_per_req db_query_mean_ms`）：
 
-<粘贴表格>
+| step | target_rps | ok_rps | mean_ms | p99_ms | server_rps | server_mean_ms | server_p99_ms | cpu_ms_per_req | db_query_mean_ms |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 0 | 0.0 | - | - | 0 | NaN | NaN | +Inf | NaN |
+| 2 | 50 | 50.5 | 11.43 | 12.78 | 51.7083 | 10.7199 | 19.9 | 0.537482 | 10.3136 |
+| 3 | 100 | 97.8 | 11.59 | 13.92 | 95.5 | 10.8713 | 19.9 | 0.536459 | 10.4288 |
+| all | - | 74.2 | 11.54 | 13.24 | - | - | - | - | - |
 
-从这次实验读出：每次查询实际占用连接 <填写> ms（`db_query_mean_ms`）；每个请求消耗的 CPU <填写> ms（`cpu_ms_per_req`，取 100 请求/秒的阶段）。
+从这次实验读出：每次查询实际占用连接 **10.37** ms（`db_query_mean_ms`：阶段 2 为 10.3136、阶段 3 为 10.4288，取平均；见 `runs/t1-light/red.csv`）；每个请求消耗的 CPU **0.536459** ms（`cpu_ms_per_req`，取 100 请求/秒的阶段 3；见 `runs/t1-light/red.csv`）。
+
+> 补充（供第 6 节使用）：阶段 2、3 的 `server_p99_ms` 都是 19.9，而 `server_mean_ms` 只有 10.72 / 10.87。该值由直方图桶内线性插值得到——全部样本落在 `(0.01, 0.02]` 桶内（`le="0.01"` 的计数为 0，因为模拟数据库本身就占约 10.4 ms，不可能有请求快于 10 ms），于是 p99 被顶到桶上沿 19.9 ms，**反而大于客户端实测 p99（12.78 / 13.92 ms）**。属桶宽导致的伪影，不是真实延迟。
 
 ## 4. 任务 2：读路径
 
