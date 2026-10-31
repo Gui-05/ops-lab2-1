@@ -1,0 +1,25 @@
+[1mdiff --git a/deploy/queries-red.txt b/deploy/queries-red.txt[m
+[1mindex 99fc16b..0a3ec2b 100644[m
+[1m--- a/deploy/queries-red.txt[m
+[1m+++ b/deploy/queries-red.txt[m
+[36m@@ -6,11 +6,11 @@[m
+ [m
+ # ---- 任务 1：RED 的三条线，以及最后一行的 SLI。把 TODO 换成你们写的 PromQL（参考 L-08 第 25 页），只看 route="${route}" 这个接口 ----[m
+ # 每秒处理完的请求数（所有状态码）[m
+[31m-server_rps          TODO[m
+[32m+[m[32mserver_rps          sum(rate(http_requests_total{route="${route}"}[${window}]))[m
+ # 5xx 占全部请求的比例。没有 5xx 时分子查不到任何序列，整个结果是空的，而不是 0；想要 0 可以在分子后面加 or vector(0)[m
+[31m-server_error_rate   TODO[m
+[32m+[m[32mserver_error_rate   (sum(rate(http_requests_total{route="${route}",code=~"5.."}[${window}])) or vector(0)) / sum(rate(http_requests_total{route="${route}"}[${window}]))[m
+ # 服务端耗时的 p99，单位毫秒。直方图带 code 标签，要先按 le 把各 code 的桶加起来[m
+[31m-server_p99_ms       TODO[m
+[32m+[m[32mserver_p99_ms       1000 * histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{route="${route}"}[${window}])))[m
+ [m
+ # ---- 已经写好的 ----[m
+ # 服务端平均耗时（毫秒）= 耗时之和的速率 ÷ 次数的速率[m
+[36m@@ -36,4 +36,4 @@[m [mbatch_mean          rate(enroll_commit_batch_size_sum[${window}]) / rate(enroll_[m
+ goroutines_max      max_over_time(go_goroutines{job="enrolld"}[${window}])[m
+ [m
+ # ---- 任务 1：服务端看到的 SLI = 成功（code="200"）且耗时不超过 ${slo} 秒的请求 ÷ 全部请求（L-08 第 19 页）----[m
+[31m-server_slo_good     TODO[m
+[32m+[m[32mserver_slo_good     (sum(rate(http_request_duration_seconds_bucket{route="${route}",code="200",le="${slo}"}[${window}])) or vector(0)) / sum(rate(http_requests_total{route="${route}"}[${window}]))[m
