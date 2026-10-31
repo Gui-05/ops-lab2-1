@@ -1,4 +1,4 @@
-## task1
+# task1
 
 root@1-0001:~/lab2# scripts/table.sh runs/t1-light ok_rps mean_ms p99_ms server_rps server_mean_ms server_p99_ms cpu_ms_per_req db_query_mean_ms
 
@@ -9,7 +9,9 @@ root@1-0001:~/lab2# scripts/table.sh runs/t1-light ok_rps mean_ms p99_ms server_
 | 3 | 100 | 97.8 | 11.59 | 13.92 | 95.5 | 10.8713 | 19.9 | 0.536459 | 10.4288 |
 | all | - | 74.2 | 11.54 | 13.24 | - | - | - | - | - |
 
-## task 2
+# task 2
+
+## R1
 
 root@1-0001:~/lab2# scripts/rates.sh 388
 78,155,233,272,310,349,388,427,466
@@ -75,3 +77,38 @@ root@1-0001:~/lab2# scripts/table.sh runs/r1-pool4 ok_rps error_rate p99_ms serv
 | 8 | 427 | 374.8 | 0.1148 | 1012.00 | 1983.27 | 998.545 | 418.12 | 0.490758 | 4 | 1915.12 | 0.497779 | 0.215 | 3 |
 | 9 | 466 | 374.8 | 0.1948 | 1012.27 | 1987.35 | 1002.68 | 471.04 | 0.494703 | 4 | 1952.8 | 0.708652 | 0.2535 | 1.8 |
 | all | - | 281.8 | 0.0544 | 1011.47 | - | - | - | - | - | - | - | - | - |
+
+root@1-0001:~/lab2# taskset -c "$GEN_CPUS" bin/loadgen -url http://127.0.0.1:8080/api/courses/1 \
+  -rates "$(scripts/rates.sh 388 0.8)" -step 40s > /dev/null 2>&1 &
+LG=$!                                  # 后台 loadgen 的进程号
+sleep 10
+go tool pprof -top -nodecount=15 'http://127.0.0.1:8080/debug/pprof/profile?seconds=20' | tee runs/r1-pool4/pprof-top.txt
+wait "$LG"         
+[1] 771965
+Fetching profile over HTTP from http://127.0.0.1:8080/debug/pprof/profile?seconds=20
+Saved profile in /root/pprof/pprof.enrolld.samples.cpu.001.pb.gz
+File: enrolld
+Build ID: 1a2e75ec36cd73b60c8824be418195bc64bb8eaf
+Type: cpu
+Time: 2026-10-31 16:10:29 CST
+Duration: 20s, Total samples = 2.90s (14.50%)
+Showing nodes accounting for 2.68s, 92.41% of 2.90s total
+Dropped 66 nodes (cum <= 0.01s)
+Showing top 15 nodes out of 55
+      flat  flat%   sum%        cum   cum%
+     2.38s 82.07% 82.07%      2.38s 82.07%  main.spin (inline)
+     0.18s  6.21% 88.28%      0.18s  6.21%  internal/runtime/syscall/linux.Syscall6
+     0.03s  1.03% 89.31%      0.03s  1.03%  runtime.futex
+     0.02s  0.69% 90.00%      0.02s  0.69%  net/http.(*chunkWriter).writeHeader
+     0.01s  0.34% 90.34%      0.02s  0.69%  encoding/json.structEncoder.encode
+     0.01s  0.34% 90.69%      0.04s  1.38%  net/http.(*conn).readRequest
+     0.01s  0.34% 91.03%      2.80s 96.55%  net/http.(*conn).serve
+     0.01s  0.34% 91.38%      0.02s  0.69%  runtime.execute
+     0.01s  0.34% 91.72%      0.06s  2.07%  runtime.findRunnable
+     0.01s  0.34% 92.07%      0.03s  1.03%  runtime.netpoll
+     0.01s  0.34% 92.41%      0.17s  5.86%  syscall.RawSyscall6
+         0     0% 92.41%      0.06s  2.07%  bufio.(*Reader).Peek
+         0     0% 92.41%      0.06s  2.07%  bufio.(*Reader).fill
+         0     0% 92.41%      0.17s  5.86%  bufio.(*Writer).Flush
+         0     0% 92.41%      0.03s  1.03%  encoding/json.(*Encoder).Encode
+[1]+  Done                    taskset -c "$GEN_CPUS" bin/loadgen -url http://127.0.0.1:8080/api/courses/1 -rates "$(scripts/rates.sh 388 0.8)" -step 40s > /dev/null 2>&1

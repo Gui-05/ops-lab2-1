@@ -1,0 +1,24 @@
+File: enrolld
+Build ID: 1a2e75ec36cd73b60c8824be418195bc64bb8eaf
+Type: cpu
+Time: 2026-10-31 16:10:29 CST
+Duration: 20s, Total samples = 2.90s (14.50%)
+Showing nodes accounting for 2.68s, 92.41% of 2.90s total
+Dropped 66 nodes (cum <= 0.01s)
+Showing top 15 nodes out of 55
+      flat  flat%   sum%        cum   cum%
+     2.38s 82.07% 82.07%      2.38s 82.07%  main.spin (inline)
+     0.18s  6.21% 88.28%      0.18s  6.21%  internal/runtime/syscall/linux.Syscall6
+     0.03s  1.03% 89.31%      0.03s  1.03%  runtime.futex
+     0.02s  0.69% 90.00%      0.02s  0.69%  net/http.(*chunkWriter).writeHeader
+     0.01s  0.34% 90.34%      0.02s  0.69%  encoding/json.structEncoder.encode
+     0.01s  0.34% 90.69%      0.04s  1.38%  net/http.(*conn).readRequest
+     0.01s  0.34% 91.03%      2.80s 96.55%  net/http.(*conn).serve
+     0.01s  0.34% 91.38%      0.02s  0.69%  runtime.execute
+     0.01s  0.34% 91.72%      0.06s  2.07%  runtime.findRunnable
+     0.01s  0.34% 92.07%      0.03s  1.03%  runtime.netpoll
+     0.01s  0.34% 92.41%      0.17s  5.86%  syscall.RawSyscall6
+         0     0% 92.41%      0.06s  2.07%  bufio.(*Reader).Peek
+         0     0% 92.41%      0.06s  2.07%  bufio.(*Reader).fill
+         0     0% 92.41%      0.17s  5.86%  bufio.(*Writer).Flush
+         0     0% 92.41%      0.03s  1.03%  encoding/json.(*Encoder).Encode
