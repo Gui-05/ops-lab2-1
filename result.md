@@ -308,3 +308,45 @@ root@1-0001:~/lab2# scripts/table.sh runs/w2-group \
 | 6 | 2454 | 2448.1 | 0.0000 | 5.97 | 5.13884 | 0.253232 | 752.625 | 1.28109 | 3.25638 | 0.263 | 0.30675 | 2252.15 | 0.392181 | 1500.25 | 0.0357607 | 0.9369 | 0.8735 |
 | 7 | 3272 | 3267.6 | 0.0000 | 6.01 | 4.99506 | 0.303971 | 733 | 1.33127 | 4.46464 | 0.3165 | 0.28475 | 2203.85 | 0.391406 | 1466.35 | 0.0367238 | 0.9164 | 0.84445 |
 | all | - | 1482.8 | 0.0000 | 6.04 | - | - | - | - | - | - | - | - | - | - | - | - | - |
+
+## W3
+
+root@1-0001:~/lab2# RATES=$(scripts/rates.sh 818  0.4 1.5 4)
+root@1-0001:~/lab2# scripts/rates.sh 818  0.4 1.5 4
+327,1227,3272
+root@1-0001:~/lab2# scripts/run.sh w3-interval -url http://127.0.0.1:8080/api/enroll -body "$B" -rates "$RATES"
+== loadgen（结果写进 runs/w3-interval/）
+loadgen：POST http://127.0.0.1:8080/api/enroll，3 个阶段 × 30s，到达过程 poisson，超时 2s，GOMAXPROCS=1
+阶段 1/3：目标 327 请求/秒，已发出 9796，已成功 9793，在途 3，压测机 CPU 5%
+阶段 2/3：目标 1227 请求/秒，已发出 37005，已成功 37005，在途 0，压测机 CPU 16%
+阶段 3/3：目标 3272 请求/秒，已发出 97980，已成功 97977，在途 3，压测机 CPU 32%
+等待在途的 3 个请求结束（最多 2s）…
+step  target_rps    sent      ok  error_rate  mean_ms  p50_ms  p99_ms  max_ms  slo_good  lag_p99_ms  gen_cpu_pct  
+   1         327    9796    9796      0.0000     0.73    0.72    1.40    3.89    1.0000        1.07            5  
+   2        1227   37005   37005      0.0000     0.72    0.70    1.52    3.85    1.0000        1.10           16  
+   3        3272   97980   97980      0.0000     0.83    0.75    2.71   12.46    1.0000        1.24           32  
+ all              144781  144781      0.0000     0.79    0.73    2.43   12.46    1.0000        1.18           18  
+== 按阶段查询 Prometheus
+-- red.csv
+step  target_rps  server_rps  server_error_rate  server_p99_ms  server_mean_ms  inflight_avg  cpu_cores  cpu_ms_per_req  cpu_wait_threads  sched_wait_p99_ms  pool_in_use_avg  pool_wait_p99_ms  db_query_mean_ms  fsync_per_s  fsync_mean_ms  fsync_p99_ms  batch_mean  goroutines_max  server_slo_good
+1     327         324.792     0                  0.990127       0.027935        0             0.0354625  0.109185        0.0298877         0.0997376          0        NaN               NaN               1            1.95802        4.82          325.833     12              1
+2     1227        1232.29     0                  0.99           0.0272865       0             0.118296   0.0959966       0.100889          0.159095           0        NaN               NaN               1            2.30877        4.97          1233.21     18              1
+3     3272        3264.67     0                  0.990329       0.0274862       0             0.27689    0.0848141       0.234481          0.380404           0        NaN               NaN               1            3.08992        4.97          3267.88     49              1
+-- use.csv
+step  target_rps  svc_cpu_busy  all_cpu_busy  cpu_steal  cpu_iowait  procs_running_avg  cpu_psi_some  mem_available_min_mb  swap_in_per_s  disk_w_per_s  disk_wkb_per_s  disk_w_await_ms  disk_f_per_s  disk_f_await_ms  disk_aqu_sz  disk_util
+1     327         0.054         0.061         0          0.00075     2                  0.0432939     2040.88               0              4.95          80.8  0.585859         2             0.05             0.003        0.00185
+2     1227        0.1405        0.16          0          0.00075     2.6                0.129487      2040.84               0              4.6           138.2  0.641304         2.15          0.0232558        0.00305      0.00205
+3     3272        0.317         0.34725       0          0.00075     3.8                0.272673      2040.62               0              7.1           297.8  0.859155         2             0.05             0.0062       0.00295
+完成：runs/w3-interval
+root@1-0001:~/lab2# scripts/table.sh runs/w3-interval \
+  ok_rps error_rate p99_ms server_p99_ms \
+  cpu_cores fsync_per_s fsync_mean_ms batch_mean \
+  svc_cpu_busy cpu_iowait \
+  disk_w_per_s disk_w_await_ms disk_f_per_s disk_f_await_ms \
+  disk_aqu_sz disk_util
+| step | target_rps | ok_rps | error_rate | p99_ms | server_p99_ms | cpu_cores | fsync_per_s | fsync_mean_ms | batch_mean | svc_cpu_busy | cpu_iowait | disk_w_per_s |disk_w_await_ms | disk_f_per_s | disk_f_await_ms | disk_aqu_sz | disk_util |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 327 | 326.5 | 0.0000 | 1.40 | 0.990127 | 0.0354625 | 1 | 1.95802 | 325.833 | 0.054 | 0.00075 | 4.95 | 0.585859 | 2 | 0.05 | 0.003 | 0.00185 |
+| 2 | 1227 | 1233.5 | 0.0000 | 1.52 | 0.99 | 0.118296 | 1 | 2.30877 | 1233.21 | 0.1405 | 0.00075 | 4.6 | 0.641304 | 2.15 | 0.0232558 | 0.00305 | 0.00205 |
+| 3 | 3272 | 3266.0 | 0.0000 | 2.71 | 0.990329 | 0.27689 | 1 | 3.08992 | 3267.88 | 0.317 | 0.00075 | 7.1 | 0.859155 | 2 | 0.05 | 0.0062 | 0.00295 |
+| all | - | 1608.7 | 0.0000 | 2.43 | - | - | - | - | - | - | - | - | - | - | - | - | - |
